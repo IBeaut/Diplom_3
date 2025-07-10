@@ -1,0 +1,44 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.env
+.venv/
+venv/
+ENV/
+env.bak/
+env/
+
+# IDE configs
+.vscode/
+.idea/
+*.iml
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Test/Allure artifacts
+allure-results/
+allure-report/
+*.log
+*.tmp
+.pytest_cache/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Local overrides or machine-specific settings
+*.local
+
+# Screenshots from tests
+screenshots/
+
+# ChromeDriver (если скачивается автоматически)
+chromedriver
+chromedriver.exe
