@@ -200,3 +200,17 @@ cython_debug/
 /.idea/inspectionProfiles/Project_Default.xml
 /.idea/vcs.xml
 /.idea/dictionaries/project.xml
+
+locators/forgot_password_locators.py
+locators/login_locators.py
+locators/main_locators.py
+locators/order_feed_locators.py
+locators/profile_locators.py
+pages/main_page.py
+pages/order_feed_page.py
+pages/order_feed_page.py
+tests/test_order_feed.py
+tests/test_password_recovery.py
+utils/
+utils/api_client.py
+utils/driver_factory.py
