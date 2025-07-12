@@ -1,33 +1,43 @@
+import copy
 import pytest
-import uuid
-import os
-from utils.driver_factory import DriverFactory
-from utils.api_client import ApiClient
+from selenium import webdriver
+from urls import Urls
+from helper import Generator
+import requests
+import allure
 
-@pytest.fixture(params=["chrome", "firefox"], scope="function")
+
+# фикстура запускает браузеры Chrome, Firefox и закрывает их завершению теста
+@pytest.fixture(params=["chrome", "firefox"])
 def driver(request):
-    browser = request.param
-    driver = DriverFactory.get_driver(browser)
-    driver.maximize_window()
+    if request.param == "chrome":
+        chrome_options = webdriver.ChromeOptions()
+        driver = webdriver.Chrome(options=chrome_options)
+    elif request.param == "firefox":
+        firefox_options = webdriver.FirefoxOptions()
+        driver = webdriver.Firefox(options=firefox_options)
     yield driver
     driver.quit()
 
-@pytest.fixture
-def user():
-    email = f"testuser_{uuid.uuid4().hex[:8]}@example.com"
-    password = "password123"
-    name = "Test User"
-    response = ApiClient.create_user(email, password, name)
-    token = response.json()["accessToken"]
-    yield {"email": email, "password": password}
-    ApiClient.delete_user(token)
 
-@pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    outcome = yield
-    rep = outcome.get_result()
-    if rep.when == "call" and rep.failed:
-        driver = item.funcargs.get("driver")
-        if driver:
-            os.makedirs("screenshots", exist_ok=True)
-            driver.save_screenshot(f"screenshots/{item.name}.png")
+# фикстура создаёт и регистрирует нового пользователя через API и удаляет его после теста
+@pytest.fixture(scope='function')
+def registered_user_data():
+    payload = Generator.random_user_data()
+    email = payload["email"]
+    password = payload["password"]
+    with allure.step("Создание пользователя через API"):
+        response = requests.post(url=Urls.CREATE_USER, json=payload)
+        if response.status_code != 200:
+            pytest.skip(f"Не удалось создать пользователя. Код ответа: {response.status_code}")
+        access_token = response.json().get("access_token")
+    yield email, password
+    with allure.step("Удаление пользователя через API"):
+        login_payload = copy.deepcopy(payload)
+        del login_payload["name"]
+        with allure.step('Проверка перед удалением, что пользователь существует'):
+            response_login = requests.post(url=Urls.LOGIN_USER, json=login_payload)
+            if response_login.status_code == 200:
+                header = {'Authorization': access_token}
+                with allure.step('Запрос удаление пользователя'):
+                    requests.delete(Urls.DELETE_USER, headers=header)
